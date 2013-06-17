@@ -6,6 +6,7 @@ import sys
 import matplotlib.pyplot as plt
 from myFileModifier import ExcelToDataframe as EDF
 from myFileModifier import ExcelToSources as ETS
+import webbrowser
 
 class IonAttribute():
     def __init__(self):
@@ -19,7 +20,6 @@ class Ion:
     def __init__(self, _Z, _N):
         self.Z = _Z
         self.N = _N
-        self.generateName()
         self.levels = []
         self.avalues = []
         self.collisions = []
@@ -33,7 +33,26 @@ class Ion:
     def N(self):
         return self.N
     
-    def E(self, index=0, sources=False):
+    def E(self, index=0, sources=False, goto=False):
+        if goto != '':
+            sourceLine = -1
+            sourceLinkLine = -1
+            for x in range(len(self.levels[index].sources)):
+                if goto in self.levels[index].sources[x]:
+                    sourceLine = x
+                    break
+            for x in range(len(self.levels[index].sources)):
+                if 'http' in self.levels[index].sources[x+sourceLine]:
+                    sourceLinkLine = x
+                    break
+            if sourceLine == -1 or sourceLinkLine == -1:
+                print 'Could not find source.'
+                return False
+            
+            url = 'http' + self.levels[index].sources[sourceLinkLine].split('http')[1]
+            webbrowser.open_new_tab(url)
+        return None
+    
         if sources:
             print ''
             for x in range(len(self.levels[index].sources)):
@@ -41,7 +60,26 @@ class Ion:
         else:
             return self.levels[index].data
     
-    def A(self, index=0, sources=False):
+    def A(self, index=0, sources=False, goto=False):
+        if goto != '':
+            sourceLine = -1
+            sourceLinkLine = -1
+            for x in range(len(self.avalues[index].sources)):
+                if goto in self.avalues[index].sources[x]:
+                    sourceLine = x
+                    break
+            for x in range(len(self.avalues[index].sources)):
+                if 'http' in self.avalues[index].sources[x+sourceLine]:
+                    sourceLinkLine = x
+                    break
+            if sourceLine == -1 or sourceLinkLine == -1:
+                print 'Could not find source.'
+                return False
+            
+            url = 'http' + self.avalues[index].sources[sourceLinkLine].split('http')[1]
+            webbrowser.open_new_tab(url)
+        return None
+    
         if sources:
             print ''
             for x in range(len(self.avalues[index].sources)):
@@ -49,7 +87,26 @@ class Ion:
         else:
             return self.avalues[index].data
     
-    def U(self, index=0, sources=False):
+    def U(self, index=0, sources=False, goto=''):
+        if goto != '':
+            sourceLine = -1
+            sourceLinkLine = -1
+            for x in range(len(self.collisions[index].sources)):
+                if goto in self.collisions[index].sources[x]:
+                    sourceLine = x
+                    break
+            for x in range(len(self.collisions[index].sources)):
+                if 'http' in self.collisions[index].sources[x+sourceLine]:
+                    sourceLinkLine = x
+                    break
+            if sourceLine == -1 or sourceLinkLine == -1:
+                print 'Could not find source.'
+                return False
+            
+            url = 'http' + self.collisions[index].sources[sourceLinkLine].split('http')[1]
+            webbrowser.open_new_tab(url)
+        return None
+            
         if sources:
             print ''
             for x in range(len(self.collisions[index].sources)):
