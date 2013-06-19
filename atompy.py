@@ -33,7 +33,7 @@ class Ion:
     def N(self):
         return self.N
     
-    def E(self, index=0, sources=False, goto=False):
+    def E(self, index=0, sources=False, goto=''):
         if goto != '':
             sourceLine = -1
             sourceLinkLine = -1
@@ -51,16 +51,17 @@ class Ion:
             
             url = 'http' + self.levels[index].sources[sourceLinkLine].split('http')[1]
             webbrowser.open_new_tab(url)
-        return None
+            return None
     
         if sources:
+            print 'printing sources'
             print ''
             for x in range(len(self.levels[index].sources)):
                 print self.levels[index].sources[x]
         else:
             return self.levels[index].data
     
-    def A(self, index=0, sources=False, goto=False):
+    def A(self, index=0, sources=False, goto=''):
         if goto != '':
             sourceLine = -1
             sourceLinkLine = -1
@@ -78,7 +79,7 @@ class Ion:
             
             url = 'http' + self.avalues[index].sources[sourceLinkLine].split('http')[1]
             webbrowser.open_new_tab(url)
-        return None
+            return None
     
         if sources:
             print ''
@@ -105,7 +106,7 @@ class Ion:
             
             url = 'http' + self.collisions[index].sources[sourceLinkLine].split('http')[1]
             webbrowser.open_new_tab(url)
-        return None
+            return None
             
         if sources:
             print ''
@@ -137,27 +138,25 @@ class Ion:
     
 def getE(Z1, N1, Z2 = None, N2 = None):
     
-    if Z2 != None and N2 != None:
+    if Z2 != None or N2 != None:
         ions = getData(Z1, N1, Z2, N2)
         levels = {}
         for x in range(len(ions)):
             levels.append(ions[x].E())
         return levels
     else:
-        ion = getData(Z1, N1, Z2, N2)
-        return ion.E()
+        return getData(Z1, N1, Z2, N2).E()
     
 def getA(Z1, N1, Z2 = None, N2 = None):
     
-    if Z2 != None and N2 != None:
+    if Z2 != None or N2 != None:
         ions = getData(Z1, N1, Z2, N2)
         avalues = {}
         for x in range(len(ions)):
             avalues.append(ions[x].A())
         return avalues
     else:
-        ion = getData(Z1, N1, Z2, N2)
-        return ion.A()
+        return getData(Z1, N1, Z2, N2).A()
     
 def getU(Z1, N1, Z2 = None, N2 = None):
     
@@ -168,8 +167,7 @@ def getU(Z1, N1, Z2 = None, N2 = None):
             collisions.append(ions[x].U())
         return collisions
     else:
-        ion = getData(Z1, N1, Z2, N2)
-        return ion.U()
+        return getData(Z1, N1, Z2, N2).U()
 
 def getData(Z1, N1, Z2 = None, N2 = None):
     #Downloads various atomic data files and stores
