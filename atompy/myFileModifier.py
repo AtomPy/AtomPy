@@ -2,7 +2,7 @@ import xlrd
 import pandas
 from StringIO import StringIO
 
-def ExcelToDataframe(_ws, _index_cols):    
+def ExcelToDataframe(_ws, _index_cols):
     #Takes: XLRD worksheet and list of indexing columns
     #Returns: Indexed Pandas dataframe
     
@@ -20,6 +20,9 @@ def ExcelToDataframe(_ws, _index_cols):
     #Extract the data and place in a csv-like string
     csv_file = ''
     currentValueAbove = ''
+    lastRow = []
+    for blah in range(_ws.ncols):
+        lastRow.append('')
     for row in range(_ws.nrows - categoryLine):
         for col in range(_ws.ncols):
             #Get the value            
@@ -54,14 +57,30 @@ def ExcelToDataframe(_ws, _index_cols):
                     currentValueAbove = valueAbove
                 if currentValueAbove != '':
                     value += '_' + currentValueAbove
+                    
+            #Unindex value
+            if value == '' and col < len(_index_cols) - 1:
+                value = lastRow[col]
+            
+            #Bug fix: remove unicode space
+            if type(value) == unicode:
+                value = value.replace(u'\xa0','')
+                
+            #Bug fix: remove any spaces in the category line
+            if row == 0:
+                if ' ' in value:
+                    value = value.replace(' ','')
+                    
+            #Bug fix: comma values within the value
+            value = str(value).replace(',','-')
             
             #Add value to the CSV file
             csv_file += str(value) + ','
+            lastRow[col] = value
         csv_file = csv_file[:-1] + '\n'
     
     #Now put into pandas dataframe
     df = pandas.read_csv(StringIO(csv_file), index_col=_index_cols)
-    
     #Return it
     return df
 

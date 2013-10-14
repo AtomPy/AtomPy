@@ -1,8 +1,7 @@
 import DownloadAPI as API
 import xlrd
 import pandas
-import os
-import sys
+import os, sys
 import matplotlib.pyplot as plt
 from myFileModifier import ExcelToDataframe as EDF
 from myFileModifier import ExcelToSources as ETS
@@ -20,6 +19,7 @@ class Ion:
     def __init__(self, _Z, _N):
         self.Z = _Z
         self.N = _N
+        self.name = 'None'
         self.levels = []
         self.avalues = []
         self.collisions = []
@@ -54,7 +54,6 @@ class Ion:
             return None
     
         if sources:
-            print 'printing sources'
             print ''
             for x in range(len(self.levels[index].sources)):
                 print self.levels[index].sources[x]
@@ -139,50 +138,54 @@ class Ion:
 def getE(Z1, N1, Z2 = None, N2 = None):
     
     if Z2 != None or N2 != None:
-        ions = getData(Z1, N1, Z2, N2)
+        ions = getdata(Z1, N1, Z2, N2)
         levels = {}
         for x in range(len(ions)):
             levels.append(ions[x].E())
         return levels
     else:
-        return getData(Z1, N1, Z2, N2).E()
+        return getdata(Z1, N1, Z2, N2).E()
     
 def getA(Z1, N1, Z2 = None, N2 = None):
     
     if Z2 != None or N2 != None:
-        ions = getData(Z1, N1, Z2, N2)
+        ions = getdata(Z1, N1, Z2, N2)
         avalues = {}
         for x in range(len(ions)):
             avalues.append(ions[x].A())
         return avalues
     else:
-        return getData(Z1, N1, Z2, N2).A()
+        return getdata(Z1, N1, Z2, N2).A()
     
 def getU(Z1, N1, Z2 = None, N2 = None):
     
     if Z2 != None and N2 != None:
-        ions = getData(Z1, N1, Z2, N2)
+        ions = getdata(Z1, N1, Z2, N2)
         collisions = {}
         for x in range(len(ions)):
             collisions.append(ions[x].U())
         return collisions
     else:
-        return getData(Z1, N1, Z2, N2).U()
+        return getdata(Z1, N1, Z2, N2).U()
 
-def getData(Z1, N1, Z2 = None, N2 = None):
+def getdata(Z1, N1, Z2 = None, N2 = None):
     #Downloads various atomic data files and stores
     #them in Panda dataframes
     
     #Takes: Single data set or range of Z, N
     #Returns: Single ion or list of ions
     
+    #Make sure Z and N are INTS
+    Z1 = int(Z1)
+    N1 = int(N1)
+    
     #Start the Google API Drive Service Object
     print 'Connecting to online database...'
     driveService = API.getDriveService()
-    
+
     #Get the list of files
     files = API.getFileList(driveService)    
-    
+
     #Z Range
     ZRange = 1
     if Z2 == None:
@@ -220,7 +223,7 @@ def getData(Z1, N1, Z2 = None, N2 = None):
                 filename += '0' + str(currentN)
             else:
                 filename += str(currentN)
-            
+                
             #Search for the file
             foundFile = False
             fileIndex = -1
@@ -267,7 +270,7 @@ def getData(Z1, N1, Z2 = None, N2 = None):
                 for i in range(NumOfE):
                     levels = IonAttribute()
                     levels.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                      ['Z','N','ilev'])
+                                      ['Z','N','i-level'])
                     levels.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.levels.append(levels)
                     
@@ -277,7 +280,7 @@ def getData(Z1, N1, Z2 = None, N2 = None):
                 for i in range(NumOfA):
                     avalues = IonAttribute()
                     avalues.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                       ['Z','N','jlev','ilev'])
+                                       ['Z','N','j-level','i-level'])
                     avalues.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.avalues.append(avalues)
                     
@@ -292,6 +295,9 @@ def getData(Z1, N1, Z2 = None, N2 = None):
                     myIon.collisions.append(collisions)
                    
                     CurrentSheet += 1
+                    
+                #Generate our name
+                myIon.generateName()
                 
                 #Set to the ion storage array
                 Ions.append(myIon)
@@ -301,6 +307,7 @@ def getData(Z1, N1, Z2 = None, N2 = None):
             
     #Return either the single ion or the range of ions
     if len(Ions) == 1:
+        print Ions[0]
         return Ions[0]
     if len(Ions) > 1:
         return Ions
@@ -313,10 +320,7 @@ def EUnit(x,unit='cm-1'):
         return x*1.239841930e-4
     return x
 
-def graphData(df, xAxis, yAxis, scatter=True, line=True, color='blue'):
-    #Bug fix: Custom indexing screws everything up
-    df = df.reset_index()
-    
+def plot(df, xAxis, yAxis, scatter=True, line=True, color='blue'):
     myMarker = 'o'
     if scatter == False:
         myMarker = ' '
@@ -325,13 +329,73 @@ def graphData(df, xAxis, yAxis, scatter=True, line=True, color='blue'):
     if line == False:
         myLine = ' '
         
-    #Graph data
+    #Graph data        
     plt.plot(df[xAxis],df[yAxis], marker=myMarker, linestyle=myLine, color=color)
     plt.xlabel(xAxis)
     plt.ylabel(yAxis)
     plt.show()
     
-def printExpanded(df):
+def plotall(df, xAxis, yAxis, fileloc=None, scatter=True, line=True, color='blue', color2='red'):
+    myMarker = 'o'
+    if scatter == False:
+        myMarker = ' '
+    
+    myLine = '-'
+    if line == False:
+        myLine = ' '
+        
+    #Check to make sure the axis values are correct
+    if len(xAxis) < 1:
+        print 'XAxis not given...'
+        return None
+    if len(yAxis) < 1:
+        print 'YAxis not given...'
+        return None
+    if len(xAxis) > len(yAxis) or len(yAxis) > len(xAxis):
+        print 'Axis arrays don\'t match in length...'
+        return None
+        
+    #Go through all of the possible indexes of the data
+    for x in range(len(df.index)):
+        #Create a dataframe to hold the data for this particular transition
+        myDF = df
+        
+        #Index and build filename
+        filename = ''
+        for y in range(len(df.index[x])-1):
+            myDF = myDF.loc[df.index[x][y]]
+            filename += str(int(df.index[x][y])) + '.'
+        filename = filename[:-1]
+        
+        #Now graph the data
+        for z in range(len(xAxis)):
+            plt.plot(myDF[xAxis[z]],myDF[yAxis[z]], marker=myMarker, linestyle=myLine, color=color)
+            plt.plot(myDF[xAxis[z]],myDF[yAxis[z]], marker=myMarker, linestyle=myLine, color=color2)
+            plt.xlabel(xAxis[z] + ' vs ' + xAxis[z])
+            plt.ylabel(yAxis[z] + ' vs ' + yAxis[z])
+        
+        #Save the graph and close
+        if(fileloc != None):
+            plt.savefig(fileloc + filename + '.png')
+            plt.close()
+
+def elementaw(Z):
+    print 'Function not yet ready...'
+    
+def elementryd(Z):
+    print 'Function not yet ready...'
+    
+def ionip(Z, N):
+    print 'Function not yet ready...'
+    
+def isotopeaw(Z, M):
+    print 'Function not yet ready...'
+    
+def isotopecomp(Z, M):
+    print 'Function not yet ready...'
+    
+#Dev tools for debugging purposes
+def printexpanded(df):
     #Get the current settings
     before_height = pandas.get_option('display.height')
     before_max_rows = pandas.get_option('display.max_rows')
@@ -347,10 +411,12 @@ def printExpanded(df):
     pandas.set_option('display.height', before_height)
     pandas.set_option('display.max_rows', before_max_rows)
     
-def printStats(df):
+def printstats(df):
     #Prints some statistical data of the dataframe provided
     print df.describe()
 
 def clear():
     os.system('cls')
-    
+
+#MAIN
+print 'Initializing AtomPy...'
