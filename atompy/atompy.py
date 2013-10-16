@@ -6,6 +6,26 @@ import matplotlib.pyplot as plt
 from myFileModifier import ExcelToDataframe as EDF
 from myFileModifier import ExcelToSources as ETS
 import webbrowser
+import refs
+
+#Global Refs class for element, ion, isotope data
+Refs = refs.Refs()
+
+#Wrapper functions
+def elementaw(Z):
+    return Refs.elementaw(Z)
+
+def elementryd(Z):
+    return Refs.elementryd(Z)
+
+def ionip(Z, N):
+    return Refs.ionip(Z, N)
+
+def isotopeaw(Z, M):
+    return Refs.isotopeaw(Z, M)
+
+def isotopecomp(Z, M):
+    return Refs.isotopecomp(Z, M)
 
 class IonAttribute():
     def __init__(self):
@@ -378,21 +398,6 @@ def plotall(df, xAxis, yAxis, fileloc=None, scatter=True, line=True, color='blue
         if(fileloc != None):
             plt.savefig(fileloc + filename + '.png')
             plt.close()
-
-def elementaw(Z):
-    print 'Function not yet ready...'
-    
-def elementryd(Z):
-    print 'Function not yet ready...'
-    
-def ionip(Z, N):
-    print 'Function not yet ready...'
-    
-def isotopeaw(Z, M):
-    print 'Function not yet ready...'
-    
-def isotopecomp(Z, M):
-    print 'Function not yet ready...'
     
 #Dev tools for debugging purposes
 def printexpanded(df):
@@ -419,4 +424,4 @@ def clear():
     os.system('cls')
 
 #MAIN
-print 'Initializing AtomPy...'
+print 'AtomPy ready!'
