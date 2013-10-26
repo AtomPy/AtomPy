@@ -1,3 +1,5 @@
+print 'Initializing AtomPy...'
+
 import DownloadAPI as API
 import xlrd
 import pandas
@@ -9,7 +11,7 @@ import webbrowser
 import refs
 
 #Global Refs class for element, ion, isotope data
-Refs = None
+Refs = refs.Refs()
 
 #Wrapper functions
 def elementaw(Z):
@@ -422,3 +424,5 @@ def printstats(df):
 
 def clear():
     os.system('cls')
+    
+print 'AtomPy ready!'
