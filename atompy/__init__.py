@@ -1,2 +1,2 @@
 #Required file
-import atompy
+import atompy as atompy
