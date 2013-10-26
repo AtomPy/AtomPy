@@ -9,7 +9,7 @@ import webbrowser
 import refs
 
 #Global Refs class for element, ion, isotope data
-Refs = refs.Refs()
+Refs = None
 
 #Wrapper functions
 def elementaw(Z):
@@ -422,6 +422,3 @@ def printstats(df):
 
 def clear():
     os.system('cls')
-
-#MAIN
-print 'AtomPy ready!'
