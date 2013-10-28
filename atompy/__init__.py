@@ -14,14 +14,23 @@ import refs
 Refs = refs.Refs()
 
 #Wrapper functions
+def element(Z):
+    return Refs.element(Z)
+
 def elementaw(Z):
     return Refs.elementaw(Z)
 
 def elementryd(Z):
     return Refs.elementryd(Z)
 
+def ion(Z, N):
+    return Refs.ion(Z, N)
+
 def ionip(Z, N):
     return Refs.ionip(Z, N)
+
+def isotope(Z, M):
+    return Refs.isotope(Z, M)
 
 def isotopeaw(Z, M):
     return Refs.isotopeaw(Z, M)
@@ -31,6 +40,9 @@ def isotopecomp(Z, M):
 
 class IonAttribute():
     def __init__(self):
+        #Title
+        self.title = None
+        
         #Data holds the pandas dataframe
         self.data = None
         
@@ -45,6 +57,7 @@ class Ion:
         self.levels = []
         self.avalues = []
         self.collisions = []
+        self.O = []
         
     def Name(self):
         return self.name
@@ -142,7 +155,6 @@ class Ion:
             name += '0' + str(self.Z)
         else:
             name += str(self.Z)
-        name += '.'
         if self.N < 10:
             name += '0' + str(self.N)
         else:
@@ -152,9 +164,36 @@ class Ion:
     def __str__(self):
         myString = ''
         myString += 'Ion: ' + self.Name() + ' \n'
-        myString += '  E: ' + str(len(self.levels)) + ' \n'
-        myString += '  A: ' + str(len(self.avalues)) + ' \n'
-        myString += '  U: ' + str(len(self.collisions)) + ' \n'
+        
+        #E Sheet Count
+        if len(self.levels) == 0:
+            myString += '  No E sheets found...\n'
+        else:
+            for num in range(len(self.levels)):
+                myString += '  E' + str(num) + ': ' + self.levels[num].title + '\n'
+        
+        #A Sheet Count
+        if len(self.avalues) == 0:
+            myString += '  No A sheets found...\n'
+        else:
+            for num in range(len(self.avalues)):
+                myString += '  A' + str(num) + ': ' + self.avalues[num].title + '\n'
+        
+        #U Sheet Count    
+        if len(self.collisions) == 0:
+            myString += '  No U sheets found...\n'
+        else: 
+            for num in range(len(self.collisions)):
+                myString += '  U' + str(num) + ': ' + self.collisions[num].title + '\n'
+        
+        #O Sheet Count
+        if len(self.O) == 0:
+            myString += '  No O sheets found...\n'
+        else: 
+            for num in range(len(self.O)):
+                myString += '  O' + str(num) + ': ' + self.O[num].title + '\n'
+                
+        #Return
         return myString
     
 def getE(Z1, N1, Z2 = None, N2 = None):
@@ -278,6 +317,7 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                 NumOfE = 0
                 NumOfA = 0
                 NumOfU = 0
+                NumOfO = 0
                 
                 for x in range(wb.nsheets):
                     if 'E' in wb.sheet_by_index(x).name:
@@ -285,12 +325,15 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                     if 'A' in wb.sheet_by_index(x).name:
                         NumOfA += 1
                     if 'U' in wb.sheet_by_index(x).name:
-                        NumOfU += 1              
+                        NumOfU += 1
+                    if 'O' in wb.sheet_by_index(x).name:
+                        NumOfO += 1              
                 
                 #Extract level data
                 CurrentSheet = 0
                 for i in range(NumOfE):
                     levels = IonAttribute()
+                    levels.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     levels.data = EDF(wb.sheet_by_index(CurrentSheet), 
                                       ['Z','N','i-level'])
                     levels.sources = ETS(wb.sheet_by_index(CurrentSheet))
@@ -301,6 +344,7 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                 #Extract a value data
                 for i in range(NumOfA):
                     avalues = IonAttribute()
+                    avalues.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     avalues.data = EDF(wb.sheet_by_index(CurrentSheet), 
                                        ['Z','N','j-level','i-level'])
                     avalues.sources = ETS(wb.sheet_by_index(CurrentSheet))
@@ -311,12 +355,23 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                 #Extract collision data
                 for i in range(NumOfU):
                     collisions = IonAttribute()
+                    collisions.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     collisions.data = EDF(wb.sheet_by_index(CurrentSheet), 
                                           ['Z','N','jlev','ilev','np'])
                     collisions.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.collisions.append(collisions)
                    
                     CurrentSheet += 1
+                    
+                #Extract O data
+                '''for i in range(NumOfO):
+                    collisions = IonAttribute()
+                    collisions.data = EDF(wb.sheet_by_index(CurrentSheet), 
+                                          ['Z','N','jlev','ilev','np'])
+                    collisions.sources = ETS(wb.sheet_by_index(CurrentSheet))
+                    myIon.collisions.append(collisions)
+                   
+                    CurrentSheet += 1'''
                     
                 #Generate our name
                 myIon.generateName()
@@ -426,3 +481,5 @@ def clear():
     os.system('cls')
     
 print 'AtomPy ready!'
+
+a = getdata(8,6)

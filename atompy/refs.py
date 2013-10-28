@@ -33,25 +33,35 @@ class Refs():
                 wb = xlrd.open_workbook(file_contents=content)
                 self.isotope_df = EDF(wb.sheet_by_index(0),['Z','M'])
                 continue
+    
+    def element(self, Z):
+        ion = self.element_df.loc[Z]
+        return (ion['Element'],ion['Symbol'])
             
     def elementaw(self, Z):
         ion = self.element_df.loc[Z]
-        return [float(ion['AtomicW_R1']),float(ion['Unct_R1'])]
+        return (float(ion['AtomicW_R1']),float(ion['Unct_R1']))
     
     def elementryd(self, Z):
         ion = self.element_df.loc[Z]
-        return [float(ion['RydConst_R1']),float(ion['Unct_R1'])]
+        return (float(ion['RydConst_R1']),float(ion['Unct_R1']))
+    
+    def ion(self, Z, N):
+        ion = self.ion_df.loc[(Z,N)]
+        return (ion['Ion'],ion['GroundConf'],ion['Term'],ion['J'])
             
     def ionip(self, Z, N):
         ion = self.ion_df.loc[(Z,N)]
-        return [float(ion['IP_R1']),float(ion['Unct_R1'])]
+        return (float(ion['IP_R1']),float(ion['Unct_R1']))
+    
+    def isotope(self, Z, M):
+        ion = self.isotope_df.loc[(Z,M)]
+        return ion['Isotope']
     
     def isotopeaw(self, Z, M):
         ion = self.isotope_df.loc[(Z,M)]
-        return [float(ion['AtomicW_R1']),float(ion['Unct_R1'])]
+        return (float(ion['AtomicW_R1']),float(ion['Unct_R1']))
     
     def isotopecomp(self, Z, M):
         ion = self.isotope_df.loc[(Z,M)]
-        return [float(ion['IsoComp_R1']),float(ion['Unct_R1.1'])]
-
-
+        return (float(ion['IsoComp_R1']),float(ion['Unct_R1.1']))
