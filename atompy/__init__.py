@@ -150,7 +150,7 @@ class Ion:
             return self.collisions[index].data
         
     def generateName(self):
-        name = ''
+        name = 'wb'
         if self.Z < 10:
             name += '0' + str(self.Z)
         else:

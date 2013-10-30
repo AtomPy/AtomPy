@@ -53,8 +53,8 @@ def getDriveService():
         sys.exit('Can not connect to Google Drive. Please check internet connection.')
         
     #Error may occur with the server itself
-    except httplib2.HttpLib2Error:
-        sys.exit('Sever error. Please try again later.')
+    except httplib2.HttpLib2Error, e:
+        sys.exit('httplib2 exception: ' + str(e))
         
 def getFileList(drive_service):
     #Retrieves a list of the files in the database
