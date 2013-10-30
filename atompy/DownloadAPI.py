@@ -25,7 +25,7 @@ def getDriveService():
         
         SavedRefreshToken = '1/WjgLdc0RekqCu0s5uae1dJm9ZbmyufQWulsaXdvu3b8'
         
-        h = Http()
+        h = Http(".cache", disable_ssl_certificate_validation=True)
         post_data = {'client_id':ClientID,
                      'client_secret':ClientSecret,
                      'refresh_token':SavedRefreshToken,

@@ -150,11 +150,12 @@ class Ion:
             return self.collisions[index].data
         
     def generateName(self):
-        name = 'wb'
+        name = ''
         if self.Z < 10:
             name += '0' + str(self.Z)
         else:
             name += str(self.Z)
+        name += '_'
         if self.N < 10:
             name += '0' + str(self.N)
         else:
@@ -163,7 +164,7 @@ class Ion:
     
     def __str__(self):
         myString = ''
-        myString += 'Ion: ' + self.Name() + ' \n'
+        myString += 'Ion: Z = ' + self.name.split('_')[0] + ', N = ' + self.name.split('_')[0] + '\n'
         
         #E Sheet Count
         if len(self.levels) == 0:
@@ -273,17 +274,14 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
             currentZ = Z1 + Z
             currentN = N1 + N
             
+            #Begin setting up the ion
+            myIon = Ion(currentZ, currentN)
+            
+            #Generate our name
+            myIon.generateName()
+            
             #Build the filename
-            filename = ''
-            if currentZ < 10:
-                filename += '0' + str(currentZ)
-            else:
-                filename += str(currentZ)
-            filename += '.'
-            if currentN < 10:
-                filename += '0' + str(currentN)
-            else:
-                filename += str(currentN)
+            filename = myIon.name
                 
             #Search for the file
             foundFile = False
@@ -294,10 +292,10 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                     fileIndex = x
             
             if foundFile == False:
-                print 'Error: File not found: ' + filename
+                print 'Error: File not found: ' + myIon.name
             else:
                 #Print status
-                print 'Downloading file: ' + filename
+                print 'Downloading workbook: ' + myIon.name
                 
                 #Download the file
                 file_url = files[fileIndex]['exportLinks']['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
@@ -305,13 +303,10 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                 
                 #Output status
                 size = sys.getsizeof(content) / 1024
-                print 'File downloaded (' + str(size) + ' kb): ' + filename
+                print 'Workbook downloaded (' + str(size) + ' kb): ' + myIon.name
                 
                 #Put the excel file into a xlrd workbook
                 wb = xlrd.open_workbook(file_contents=content)
-                
-                #Begin setting up the ion
-                myIon = Ion(currentZ, currentN)
                 
                 #Figure out which sheets are which data
                 NumOfE = 0
@@ -335,7 +330,7 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                     levels = IonAttribute()
                     levels.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     levels.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                      ['Z','N','i-level'])
+                                      ['Z','N','ilev'])
                     levels.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.levels.append(levels)
                     
@@ -346,7 +341,7 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                     avalues = IonAttribute()
                     avalues.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     avalues.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                       ['Z','N','j-level','i-level'])
+                                       ['Z','N','jlev','ilev'])
                     avalues.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.avalues.append(avalues)
                     
@@ -373,9 +368,6 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                    
                     CurrentSheet += 1'''
                     
-                #Generate our name
-                myIon.generateName()
-                
                 #Set to the ion storage array
                 Ions.append(myIon)
                 
@@ -482,4 +474,4 @@ def clear():
     
 print 'AtomPy ready!'
 
-a = getdata(8,6)
+a=getdata(1,1)
