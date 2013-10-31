@@ -473,5 +473,3 @@ def clear():
     os.system('cls')
     
 print 'AtomPy ready!'
-
-a=getdata(1,1)
