@@ -9,7 +9,6 @@ setup(
     install_requires = [
         "xlrd >= 0.9.2",
         "google-api-python-client >= 0.0.0",
-        "pandas >= 0.11.0",
 	"xlwt >= 0.0.0"
     ],
 )
