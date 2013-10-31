@@ -54,9 +54,7 @@ def getDriveService():
         
     #Error may occur with the server itself
     except httplib2.HttpLib2Error, e:
-        print 'httplib2 exception: ' + str(e)
-        print 'Trying again...'
-        return getDriveService()
+        sys.exit('httplib2 exception: ' + str(e))
         
 def getFileList(drive_service):
     #Retrieves a list of the files in the database
