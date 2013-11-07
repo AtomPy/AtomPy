@@ -25,7 +25,7 @@ def getDriveService():
         
         SavedRefreshToken = '1/WjgLdc0RekqCu0s5uae1dJm9ZbmyufQWulsaXdvu3b8'
         
-        h = Http(".cache", disable_ssl_certificate_validation=True)
+        h = Http(disable_ssl_certificate_validation=True)
         post_data = {'client_id':ClientID,
                      'client_secret':ClientSecret,
                      'refresh_token':SavedRefreshToken,
@@ -44,7 +44,7 @@ def getDriveService():
         credentials = AccessTokenCredentials(access_token, ClientID)
         
         #Intialize the drive service and return it
-        http = httplib2.Http()
+        http = Http(disable_ssl_certificate_validation=True)
         http = credentials.authorize(http)
         return build('drive', 'v2', http=http)
     
