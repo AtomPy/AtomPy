@@ -330,7 +330,7 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                     levels = IonAttribute()
                     levels.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     levels.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                      ['Z','N','ilev'])
+                                      ['Z','N','i'])
                     levels.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.levels.append(levels)
                     
@@ -341,7 +341,7 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                     avalues = IonAttribute()
                     avalues.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     avalues.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                       ['Z','N','jlev','ilev'])
+                                       ['Z','N','k','i'])
                     avalues.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.avalues.append(avalues)
                     
@@ -352,7 +352,7 @@ def getdata(Z1, N1, Z2 = None, N2 = None):
                     collisions = IonAttribute()
                     collisions.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
                     collisions.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                          ['Z','N','jlev','ilev','np'])
+                                          ['Z','N','k','i','np'])
                     collisions.sources = ETS(wb.sheet_by_index(CurrentSheet))
                     myIon.collisions.append(collisions)
                    
