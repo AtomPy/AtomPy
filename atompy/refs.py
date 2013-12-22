@@ -1,6 +1,4 @@
 import DownloadAPI as API
-import xlrd
-from myFileModifier import ExcelToDataframe as EDF
 
 class Refs():
     def __init__(self):
@@ -9,31 +7,18 @@ class Refs():
         self.ion_df = None
         self.isotope_df = None
         
-        driveService = API.getDriveService()
-        files = API.getFileList(driveService)   
-        for x in range(len(files)):
-            #Get the element info
-            if files[x]['title'] == 'elements':
-                file_url = files[x]['exportLinks']['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-                resp, content = driveService._http.request(file_url)
-                wb = xlrd.open_workbook(file_contents=content)
-                self.element_df = EDF(wb.sheet_by_index(0),['Z'])
-                continue
-            #Get the ion info
-            if files[x]['title'] == 'ions':
-                file_url = files[x]['exportLinks']['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-                resp, content = driveService._http.request(file_url)
-                wb = xlrd.open_workbook(file_contents=content)
-                self.ion_df = EDF(wb.sheet_by_index(0),['Z','N'])
-                continue
-            #Get the isotope info
-            if files[x]['title'] == 'isotopes':
-                file_url = files[x]['exportLinks']['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-                resp, content = driveService._http.request(file_url)
-                wb = xlrd.open_workbook(file_contents=content)
-                self.isotope_df = EDF(wb.sheet_by_index(0),['Z','M'])
-                continue
-    
+        #Get the element file
+        elementFile = API.getFile('elements')
+        self.element_df = elementFile['worksheets'][0]['data']
+        
+        #Get the ions file
+        ionFile = API.getFile('ions')
+        self.ion_df = ionFile['worksheets'][0]['data']
+        
+        #Get the isotopes file
+        isotopeFile = API.getFile('isotopes')
+        self.isotope_df = isotopeFile['worksheets'][0]['data']        
+
     def element(self, Z):
         ion = self.element_df.loc[Z]
         return (ion['Element'],ion['Symbol'])

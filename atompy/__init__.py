@@ -1,14 +1,13 @@
 print 'Initializing AtomPy...'
 
 import DownloadAPI as API
-import xlrd
 import pandas
 import os, sys
 import matplotlib.pyplot as plt
-from myFileModifier import ExcelToDataframe as EDF
-from myFileModifier import ExcelToSources as ETS
 import webbrowser
 import refs
+import time
+from scipy import constants
 
 #Global Refs class for element, ion, isotope data
 Refs = refs.Refs()
@@ -47,7 +46,7 @@ class IonAttribute():
         self.data = None
         
         #List of sources
-        self.sources = {}
+        self.sources = ''
 
 class Ion:
     def __init__(self, _Z, _N):
@@ -229,157 +228,54 @@ def getU(Z1, N1, Z2 = None, N2 = None):
         return collisions
     else:
         return getdata(Z1, N1, Z2, N2).U()
+    
+def listcontent():
+    print API.getList()
 
-def getdata(Z1, N1, Z2 = None, N2 = None):
+def getdata(Z, N):
     #Downloads various atomic data files and stores
     #them in Panda dataframes
     
-    #Takes: Single data set or range of Z, N
-    #Returns: Single ion or list of ions
+    #Takes: Single data set
+    #Returns: Single ion
     
     #Make sure Z and N are INTS
-    Z1 = int(Z1)
-    N1 = int(N1)
-    
-    #Start the Google API Drive Service Object
-    print 'Connecting to online database...'
-    driveService = API.getDriveService()
+    Z = int(Z)
+    N = int(N)
 
-    #Get the list of files
-    files = API.getFileList(driveService)    
-
-    #Z Range
-    ZRange = 1
-    if Z2 == None:
-        Z2 = Z1
-    else:
-        ZRange = Z2 - Z1 + 1
+    myIon = Ion(Z, N)
+            
+    #Generate our name
+    myIon.generateName()
     
-    #N Range
-    NRange = 1
-    if N2 == None:
-        N2 = N1
+    #Build the filename
+    filename = myIon.name
+    
+    #Get the file
+    file = API.getFile(filename)
+    
+    #Error may have occurred, print error
+    if 'ERROR' in file:
+        print file
+    #If no error, continue with ion appending
     else:
-        NRange = N2 - N1 + 1
-        
-    #Ion storage
-    Ions = []
-        
-    CurrentFile = 0
-    #Cycle through all of the Z values
-    for Z in range(ZRange):
-        #Cycle through all of the N values
-        for N in range(NRange):
-            #Current values
-            currentZ = Z1 + Z
-            currentN = N1 + N
+        for attribute in range(len(file['worksheets'])):
+            newAttribute = IonAttribute()
+            newAttribute.title = file['worksheets'][attribute]['title']
+            newAttribute.data = file['worksheets'][attribute]['data']
+            newAttribute.sources = file['worksheets'][attribute]['sources']
             
-            #Begin setting up the ion
-            myIon = Ion(currentZ, currentN)
+            if 'E' in newAttribute.title:
+                myIon.levels.append(newAttribute)
+            if 'A' in newAttribute.title:
+                myIon.avalues.append(newAttribute)
+            if 'U' in newAttribute.title:
+                myIon.collisions.append(newAttribute)
+            if 'O' in newAttribute.title:
+                myIon.O.append(newAttribute)
             
-            #Generate our name
-            myIon.generateName()
-            
-            #Build the filename
-            filename = myIon.name
-                
-            #Search for the file
-            foundFile = False
-            fileIndex = -1
-            for x in range(len(files)):
-                if files[x]['title'] == filename:
-                    foundFile = True
-                    fileIndex = x
-            
-            if foundFile == False:
-                print 'Error: File not found: ' + myIon.name
-            else:
-                #Print status
-                print 'Downloading workbook: ' + myIon.name
-                
-                #Download the file
-                file_url = files[fileIndex]['exportLinks']['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-                resp, content = driveService._http.request(file_url)   
-                
-                #Output status
-                size = sys.getsizeof(content) / 1024
-                print 'Workbook downloaded (' + str(size) + ' kb): ' + myIon.name
-                
-                #Put the excel file into a xlrd workbook
-                wb = xlrd.open_workbook(file_contents=content)
-                
-                #Figure out which sheets are which data
-                NumOfE = 0
-                NumOfA = 0
-                NumOfU = 0
-                NumOfO = 0
-                
-                for x in range(wb.nsheets):
-                    if 'E' in wb.sheet_by_index(x).name:
-                        NumOfE += 1
-                    if 'A' in wb.sheet_by_index(x).name:
-                        NumOfA += 1
-                    if 'U' in wb.sheet_by_index(x).name:
-                        NumOfU += 1
-                    if 'O' in wb.sheet_by_index(x).name:
-                        NumOfO += 1              
-                
-                #Extract level data
-                CurrentSheet = 0
-                for i in range(NumOfE):
-                    levels = IonAttribute()
-                    levels.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
-                    levels.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                      ['Z','N','i'])
-                    levels.sources = ETS(wb.sheet_by_index(CurrentSheet))
-                    myIon.levels.append(levels)
-                    
-                    CurrentSheet += 1
-                
-                #Extract a value data
-                for i in range(NumOfA):
-                    avalues = IonAttribute()
-                    avalues.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
-                    avalues.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                       ['Z','N','k','i'])
-                    avalues.sources = ETS(wb.sheet_by_index(CurrentSheet))
-                    myIon.avalues.append(avalues)
-                    
-                    CurrentSheet += 1
-                    
-                #Extract collision data
-                for i in range(NumOfU):
-                    collisions = IonAttribute()
-                    collisions.title = str(wb.sheet_by_index(CurrentSheet).cell(0,0).value)
-                    collisions.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                          ['Z','N','k','i','np'])
-                    collisions.sources = ETS(wb.sheet_by_index(CurrentSheet))
-                    myIon.collisions.append(collisions)
-                   
-                    CurrentSheet += 1
-                    
-                #Extract O data
-                '''for i in range(NumOfO):
-                    collisions = IonAttribute()
-                    collisions.data = EDF(wb.sheet_by_index(CurrentSheet), 
-                                          ['Z','N','jlev','ilev','np'])
-                    collisions.sources = ETS(wb.sheet_by_index(CurrentSheet))
-                    myIon.collisions.append(collisions)
-                   
-                    CurrentSheet += 1'''
-                    
-                #Set to the ion storage array
-                Ions.append(myIon)
-                
-            #Increment loading bar
-            CurrentFile = CurrentFile + 1  
-            
-    #Return either the single ion or the range of ions
-    if len(Ions) == 1:
-        print Ions[0]
-        return Ions[0]
-    if len(Ions) > 1:
-        return Ions
+    #Return the ion
+    return myIon
     
 def EUnit(x,unit='cm-1'):
     #Unit conversion function
@@ -473,3 +369,4 @@ def clear():
     os.system('cls')
     
 print 'AtomPy ready!'
+listcontent()
