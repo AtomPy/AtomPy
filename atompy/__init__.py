@@ -6,8 +6,10 @@ import os, sys
 import matplotlib.pyplot as plt
 import webbrowser
 import refs
-import time
+import time, xlrd
 from scipy import constants
+from myFileModifier import ExcelToDataframe as EDF
+from myFileModifier import ExcelToSources as ETS
 
 #Global Refs class for element, ion, isotope data
 Refs = refs.Refs()
@@ -230,7 +232,7 @@ def getU(Z1, N1, Z2 = None, N2 = None):
         return getdata(Z1, N1, Z2, N2).U()
     
 def listcontent():
-    print API.getList()
+    API.printList()
 
 def getdata(Z, N):
     #Downloads various atomic data files and stores
@@ -257,6 +259,7 @@ def getdata(Z, N):
     #Error may have occurred, print error
     if 'ERROR' in file:
         print file
+        return None
     #If no error, continue with ion appending
     else:
         for attribute in range(len(file['worksheets'])):
@@ -265,16 +268,17 @@ def getdata(Z, N):
             newAttribute.data = file['worksheets'][attribute]['data']
             newAttribute.sources = file['worksheets'][attribute]['sources']
             
-            if 'E' in newAttribute.title:
+            if 'E' in file['worksheets'][attribute]['type']:
                 myIon.levels.append(newAttribute)
-            if 'A' in newAttribute.title:
+            if 'A' in file['worksheets'][attribute]['type']:
                 myIon.avalues.append(newAttribute)
-            if 'U' in newAttribute.title:
+            if 'U' in file['worksheets'][attribute]['type']:
                 myIon.collisions.append(newAttribute)
-            if 'O' in newAttribute.title:
+            if 'O' in file['worksheets'][attribute]['type']:
                 myIon.O.append(newAttribute)
             
     #Return the ion
+    print myIon
     return myIon
     
 def EUnit(x,unit='cm-1'):
@@ -369,4 +373,3 @@ def clear():
     os.system('cls')
     
 print 'AtomPy ready!'
-listcontent()

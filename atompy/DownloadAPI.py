@@ -67,18 +67,29 @@ def getFileList(drive_service):
     #Takes: a drive service instance
     #Returns: a list containing the google file info
     
-    #Request a list of the database files
-    files = drive_service.files().list().execute()
-    
-    #Make sure that the files aren't in the trash or something
     onlineDataFiles = []
-    for x in range(len(files['items'])):
-        if files['items'][x]['labels']['hidden'] == False:
-            if files['items'][x]['labels']['trashed'] == False:
-                if files['items'][x]['labels']['restricted'] == False:
-                    if files['items'][x]['mimeType'] == 'application/vnd.google-apps.spreadsheet':
-                        onlineDataFiles.append(files['items'][x])
+    page_token = None
     
+    while True:
+        #Request a list of the database files
+        param = {}
+        if page_token:
+            param['pageToken'] = page_token
+        files = drive_service.files().list(**param).execute()
+        
+        #Make sure that the files aren't in the trash or something like that
+        for x in range(len(files['items'])):
+            if files['items'][x]['labels']['hidden'] == False:
+                if files['items'][x]['labels']['trashed'] == False:
+                    if files['items'][x]['labels']['restricted'] == False:
+                        if files['items'][x]['mimeType'] == 'application/vnd.google-apps.spreadsheet':
+                            onlineDataFiles.append(files['items'][x])
+        
+        #Interate through all of the pages in the database
+        page_token = files.get('nextPageToken')
+        if not page_token:
+            break
+        
     #Return the files
     return onlineDataFiles
 
@@ -94,29 +105,25 @@ def getGDClient():
     
     return gd_client
 
-def getList():
-    #Returns a string that mimics a directory
-    #view of the database
+def printList():
+    #Prints a directory view of database
     
     #First, lets login to our drive
-    GDClient = getGDClient()
+    driveService = getDriveService()
     
-    #Get our query feed
-    q = gdata.spreadsheet.service.DocumentQuery()
-    feed = GDClient.GetSpreadsheetsFeed(query=q)
+    #Retrieve the list of files
+    files = driveService.files().list().execute()
     
-    #Get and return the file titles
-    files = []
-    for x in range(len(feed.entry)):
-        files.append(feed.entry[x].title.text)
-    return files
-
+    print files['items'][0]
+    
 def getFile(filename):
     #Gets the file data from Google Drive with
     #the queried filename, and returns a workbook
     #object containing a list that contains
     #titles, data, and sources for each worksheet
     # (these are later transferred to Ion)
+    
+    print 'Retrieving workbook: ' + filename
     
     #First, lets login to our drive
     GDClient = getGDClient()
@@ -135,14 +142,11 @@ def getFile(filename):
         if feed.entry[x].title.text == filename:
             found = x
             workbook['title'] = feed.entry[x].title.text
-            print 'Found file: ' + workbook['title']
             break
     
     #If the file is not on the drive, return error
     if found == -1:
-        return 'ERROR: ' + filename + ' not found in database.'
-    else:
-        print 'Downloading/converting file: ' + workbook['title']
+        return 'ERROR: File (' + filename + ') not found in database.'
     
     #Now get the spreadsheet ID and use it to change
     #the feed from a workbook feed to a spreadsheets
@@ -158,61 +162,50 @@ def getFile(filename):
         worksheet_id = feed.entry[x].id.text.rsplit('/',1)[1]
         
         #Second, lets create our worksheet list object
-        worksheet = {'title':feed.entry[x].title.text,#plain string
+        worksheet = {'title':None,#plain string
+                     'type':feed.entry[x].title.text,#string of data type
                      'data':None,#data is a Pandas dataframe
                      'sources':None}#sources are in an array
         
         #Now to get the data and sources from the worksheet
         #In order to get all of the data, we need to get the
         #spreadsheet cell feed (comes in the form of list of rows)
-        customQuery = gdata.spreadsheet.service.CellQuery()
-        customQuery.return_empty = "true"
-        cells = GDClient.GetCellsFeed(workbook_id, worksheet_id, query=customQuery)
+        query = gdata.spreadsheet.service.CellQuery()
+        cells = GDClient.GetCellsFeed(workbook_id, worksheet_id, query=query)
         nCol = int(cells.col_count.text)
         nRow = int(cells.row_count.text)
         cells = cells.entry
         
+        #Grab the title
+        worksheet['title'] = str(cells[0].content.text)
+        
         #Now cycle through all of the rows and extract the data 
-        #into a 2D Array
-        rawData = []
-        subRawData = []
-        colCounter = 0
+        #into a 2D Array (initialized to NULL)
+        rawData = [['' for z in range(nCol)] for y in range(nRow)]
         for y in range(len(cells)):
-            if 'type="text" />' in str(cells[y]):
-                subRawData.append('empty')
-            else:
-                subRawData.append(str(cells[y]).split("text\">")[1].split("<")[0])
-            colCounter += 1
-            if colCounter == nCol:
-                colCounter = 0
-                rawData.append(subRawData)
-                subRawData =[]
-                
-        #Now detect which rows/columns are empty
-        rowsEmpty = [True for y in range(nRow)]
-        colsEmpty = [True for y in range(nCol)]
-        for y in range(len(rawData)):
-            for z in range(len(rawData[y])):
-                if rawData[y][z] != 'empty':
-                    rowsEmpty[y] = False
-                    colsEmpty[z] = False
-                    
-        #Now remove the detected rows/columns that are empty
+            rawData[int(cells[y].cell.row)-1][int(cells[y].cell.col)-1] = str(cells[y].content.text)
+        
+        #Delete all empty rows
         delOffset = 0
-        for y in range(len(rowsEmpty)):            
-            #Remove empty rows
-            if rowsEmpty[y] == True:
-                rawData.pop(y-delOffset)
+        for y in range(len(rawData)):
+            if rawData[y-delOffset] == ['' for z in range(nCol)]:
+                rawData.pop(y - delOffset)
                 delOffset += 1
+        nRow = len(rawData)
+                
+        #Delete all empty columns
         delOffset = 0
-        for y in range(len(rawData)):
-            for z in range(len(colsEmpty)):
-                #Remove empty columns
-                if colsEmpty[z] == True:
-                    rawData[y].pop(z-delOffset)
-                    delOffset += 1
-            delOffset = 0
-            
+        for y in range(nCol):
+            emptyCol = True
+            for z in range(nRow):
+                if rawData[z][y-delOffset] != '':
+                    emptyCol = False
+                    break
+            if emptyCol == True:
+                for z in range(nRow):
+                    rawData[z].pop(y-delOffset)
+                delOffset += 1
+                
         #Figure out where the category line is for
         #splitting up the file into its components
         #Also fix the category line values
@@ -234,17 +227,17 @@ def getFile(filename):
                 rawData[categoryLine][y] = rawData[categoryLine][y].replace(' ','')
             
             #Add source info
-            if lastAddition == None and rawData[categoryLine-1][y] != 'empty':
+            if lastAddition == None and rawData[categoryLine-1][y] != '':
                 lastAddition = rawData[categoryLine-1][y]
                 additionModified = True
             
-            if lastAddition != None and rawData[categoryLine-1][y] != 'empty' and additionModified == False:
+            if lastAddition != None and rawData[categoryLine-1][y] != '' and additionModified == False:
                 lastAddition = rawData[categoryLine-1][y]
                 
             if lastAddition != None:
                 rawData[categoryLine][y] += '_' + lastAddition
             additionModified = False
-            
+        
         #Now to extract the sources from the file content
         rawSources = ''
         for y in range(len(rawData)):
@@ -260,15 +253,10 @@ def getFile(filename):
             rawSources += rawData[y][0] + '\n'
         worksheet['sources'] = rawSources
             
-        #Now convert all of the empty values to NULL for
-        #the Pandas dataframe
+        #Bug fix: data containing commas replaced with dashes
+                #Otherwise the CSV file doesnt work properly
         for y in range(len(rawData)):
             for z in range(len(rawData[y])):
-                if rawData[y][z] == 'empty':
-                    rawData[y][z] = ''
-                    
-                #Bug fix: data containing commas replaced with dashes
-                #Otherwise the CSV file doesnt work properly
                 if ',' in rawData[y][z]:
                     rawData[y][z] = rawData[y][z].replace(',','-')
         
@@ -296,13 +284,13 @@ def getFile(filename):
             dataframe = pandas.read_csv(StringIO(csv_string), index_col=['Z','M'])
         
         #Regular data
-        if 'E' in worksheet['title'] and dataframe == None:
+        if 'E' in worksheet['type'] and dataframe == None:
             dataframe = pandas.read_csv(StringIO(csv_string), index_col=['Z','N','i'])
-        if 'A' in worksheet['title'] and dataframe == None:
+        if 'A' in worksheet['type'] and dataframe == None:
             dataframe = pandas.read_csv(StringIO(csv_string), index_col=['Z','N','k','i'])
-        if 'U' in worksheet['title'] and dataframe == None:
+        if 'U' in worksheet['type'] and dataframe == None:
             dataframe = pandas.read_csv(StringIO(csv_string), index_col=['Z','N','k','i','np'])
-        if 'O' in worksheet['title'] and dataframe == None:
+        if 'O' in worksheet['type'] and dataframe == None:
             return 'ERROR: O sheets not yet supported.'
         
         #Set our dataframe to the worksheet object
@@ -312,6 +300,3 @@ def getFile(filename):
     print 'Finished worbook: ' + workbook['title']
     
     return workbook
-    
-    
-print getList()
