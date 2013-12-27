@@ -10,7 +10,8 @@ class Refs():
         self.isotope_df = None
         
         driveService = API.getDriveService()
-        files = API.getFileList(driveService)   
+        files = API.getFileList(driveService) 
+        
         for x in range(len(files)):
             #Get the element info
             if files[x]['title'] == 'elements':
@@ -33,7 +34,7 @@ class Refs():
                 wb = xlrd.open_workbook(file_contents=content)
                 self.isotope_df = EDF(wb.sheet_by_index(0),['Z','M'])
                 continue
-    
+        
     def element(self, Z):
         ion = self.element_df.loc[Z]
         return (ion['Element'],ion['Symbol'])
