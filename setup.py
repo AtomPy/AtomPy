@@ -1,4 +1,4 @@
-from setuptools import setup
+,from setuptools import setup
 
 setup(
     name = 'AtomPy',
@@ -9,6 +9,7 @@ setup(
     install_requires = [
         "xlrd >= 0.9.2",
         "google-api-python-client >= 0.0.0",
-	"xlwt >= 0.0.0"
+	"xlwt >= 0.0.0",
+        "gdata >= 0.0.0"
     ],
 )
