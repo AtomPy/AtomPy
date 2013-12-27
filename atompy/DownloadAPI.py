@@ -82,8 +82,7 @@ def getFileList(drive_service):
             if files['items'][x]['labels']['hidden'] == False:
                 if files['items'][x]['labels']['trashed'] == False:
                     if files['items'][x]['labels']['restricted'] == False:
-                        if files['items'][x]['mimeType'] == 'application/vnd.google-apps.spreadsheet':
-                            onlineDataFiles.append(files['items'][x])
+                        onlineDataFiles.append(files['items'][x])
         
         #Interate through all of the pages in the database
         page_token = files.get('nextPageToken')
@@ -92,6 +91,47 @@ def getFileList(drive_service):
         
     #Return the files
     return onlineDataFiles
+
+def listContent():
+    #Prints a directory view of database
+    
+    #First, lets get drive service
+    driveService = getDriveService()
+    
+    #Now get our files listing (includes folders)
+    fileList = getFileList(driveService)
+    
+    #Now sort the files by first seperating the
+    #files from the folders
+    files = []
+    folders = []
+    for x in range(len(fileList)):
+        if 'spreadsheet' in fileList[x]['mimeType']:
+            files.append(fileList[x])
+        if 'folder' in fileList[x]['mimeType']:
+            folders.append(fileList[x])
+    
+    #Find the root
+    root = -1
+    for x in range(len(folders)):
+        if folders[x]['parents'][0]['isRoot'] == True:
+            root = folders[x]['id']
+            break
+    
+    #Now begin the recursive call sequence
+    recursiveList(driveService, root, 0)
+
+def recursiveList(driveService, id, level):
+    children = driveService.children().list(folderId=id).execute()['items']
+    if len(children) > 0:
+        for y in range(len(children)):
+            recursiveList(driveService, children[y]['id'], level+1)
+    else: 
+        printString = ''
+        for y in range(level):
+            printString += '-'
+        printString += str(id)
+        print printString
 
 def getGDClient():
     #Returns a Google Drive Client object that is
@@ -104,17 +144,6 @@ def getGDClient():
     gd_client.ProgrammaticLogin()     
     
     return gd_client
-
-def printList():
-    #Prints a directory view of database
-    
-    #First, lets login to our drive
-    driveService = getDriveService()
-    
-    #Retrieve the list of files
-    files = driveService.files().list().execute()
-    
-    print files['items'][0]
     
 def getFile(filename):
     #Gets the file data from Google Drive with
