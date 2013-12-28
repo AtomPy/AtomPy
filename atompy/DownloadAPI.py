@@ -320,7 +320,7 @@ def getFile(filename):
         if 'U' in worksheet['type'] and dataframe == None:
             dataframe = pandas.read_csv(StringIO(csv_string), index_col=['Z','N','k','i','np'])
         if 'O' in worksheet['type'] and dataframe == None:
-            return 'ERROR: O sheets not yet supported.'
+            dataframe = pandas.read_csv(StringIO(csv_string), index_col=['Z','N'])
         
         #Set our dataframe to the worksheet object
         worksheet['data'] = dataframe

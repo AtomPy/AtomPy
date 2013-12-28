@@ -4,12 +4,9 @@ import DownloadAPI as API
 import pandas
 import os, sys
 import matplotlib.pyplot as plt
-import webbrowser
 import refs
-import time, xlrd
+import xlrd
 from scipy import constants
-from myFileModifier import ExcelToDataframe as EDF
-from myFileModifier import ExcelToSources as ETS
 
 #Global Refs class for element, ion, isotope data
 Refs = refs.Refs()
@@ -58,7 +55,7 @@ class Ion:
         self.levels = []
         self.avalues = []
         self.collisions = []
-        self.O = []
+        self.object = []
         
     def Name(self):
         return self.name
@@ -69,26 +66,7 @@ class Ion:
     def N(self):
         return self.N
     
-    def E(self, index=0, sources=False, goto=''):
-        if goto != '':
-            sourceLine = -1
-            sourceLinkLine = -1
-            for x in range(len(self.levels[index].sources)):
-                if goto in self.levels[index].sources[x]:
-                    sourceLine = x
-                    break
-            for x in range(len(self.levels[index].sources)):
-                if 'http' in self.levels[index].sources[x+sourceLine]:
-                    sourceLinkLine = x
-                    break
-            if sourceLine == -1 or sourceLinkLine == -1:
-                print 'Could not find source.'
-                return False
-            
-            url = 'http' + self.levels[index].sources[sourceLinkLine].split('http')[1]
-            webbrowser.open_new_tab(url)
-            return None
-    
+    def E(self, index=0, sources=False):
         if sources:
             print ''
             for x in range(len(self.levels[index].sources)):
@@ -96,26 +74,7 @@ class Ion:
         else:
             return self.levels[index].data
     
-    def A(self, index=0, sources=False, goto=''):
-        if goto != '':
-            sourceLine = -1
-            sourceLinkLine = -1
-            for x in range(len(self.avalues[index].sources)):
-                if goto in self.avalues[index].sources[x]:
-                    sourceLine = x
-                    break
-            for x in range(len(self.avalues[index].sources)):
-                if 'http' in self.avalues[index].sources[x+sourceLine]:
-                    sourceLinkLine = x
-                    break
-            if sourceLine == -1 or sourceLinkLine == -1:
-                print 'Could not find source.'
-                return False
-            
-            url = 'http' + self.avalues[index].sources[sourceLinkLine].split('http')[1]
-            webbrowser.open_new_tab(url)
-            return None
-    
+    def A(self, index=0, sources=False):
         if sources:
             print ''
             for x in range(len(self.avalues[index].sources)):
@@ -123,32 +82,21 @@ class Ion:
         else:
             return self.avalues[index].data
     
-    def U(self, index=0, sources=False, goto=''):
-        if goto != '':
-            sourceLine = -1
-            sourceLinkLine = -1
-            for x in range(len(self.collisions[index].sources)):
-                if goto in self.collisions[index].sources[x]:
-                    sourceLine = x
-                    break
-            for x in range(len(self.collisions[index].sources)):
-                if 'http' in self.collisions[index].sources[x+sourceLine]:
-                    sourceLinkLine = x
-                    break
-            if sourceLine == -1 or sourceLinkLine == -1:
-                print 'Could not find source.'
-                return False
-            
-            url = 'http' + self.collisions[index].sources[sourceLinkLine].split('http')[1]
-            webbrowser.open_new_tab(url)
-            return None
-            
+    def U(self, index=0, sources=False):
         if sources:
             print ''
             for x in range(len(self.collisions[index].sources)):
                 print self.collisions[index].sources[x]
         else:
             return self.collisions[index].data
+        
+    def O(self, index=0, sources=False):            
+        if sources:
+            print ''
+            for x in range(len(self.object[index].sources)):
+                print self.object[index].sources[x]
+        else:
+            return self.object[index].data
         
     def generateName(self):
         name = ''
@@ -189,50 +137,29 @@ class Ion:
                 myString += '  U' + str(num) + ': ' + self.collisions[num].title + '\n'
         
         #O Sheet Count
-        if len(self.O) == 0:
+        if len(self.object) == 0:
             myString += '  No O sheets found...\n'
         else: 
-            for num in range(len(self.O)):
-                myString += '  O' + str(num) + ': ' + self.O[num].title + '\n'
+            for num in range(len(self.object)):
+                myString += '  O' + str(num) + ': ' + self.object[num].title + '\n'
                 
         #Return
         return myString
     
-def getE(Z1, N1, Z2 = None, N2 = None):
+def getE(Z1, N1):
+    return getdata(Z1, N1).E()
     
-    if Z2 != None or N2 != None:
-        ions = getdata(Z1, N1, Z2, N2)
-        levels = {}
-        for x in range(len(ions)):
-            levels.append(ions[x].E())
-        return levels
-    else:
-        return getdata(Z1, N1, Z2, N2).E()
+def getA(Z1, N1):
+    return getdata(Z1, N1).A()
     
-def getA(Z1, N1, Z2 = None, N2 = None):
-    
-    if Z2 != None or N2 != None:
-        ions = getdata(Z1, N1, Z2, N2)
-        avalues = {}
-        for x in range(len(ions)):
-            avalues.append(ions[x].A())
-        return avalues
-    else:
-        return getdata(Z1, N1, Z2, N2).A()
-    
-def getU(Z1, N1, Z2 = None, N2 = None):
-    
-    if Z2 != None and N2 != None:
-        ions = getdata(Z1, N1, Z2, N2)
-        collisions = {}
-        for x in range(len(ions)):
-            collisions.append(ions[x].U())
-        return collisions
-    else:
-        return getdata(Z1, N1, Z2, N2).U()
+def getU(Z1, N1):
+    return getdata(Z1, N1).U()
+
+def getO(Z1, N1):
+    return getdata(Z1, N1).O()
     
 def listcontent():
-    API.printList()
+    API.listContent()
 
 def getdata(Z, N):
     #Downloads various atomic data files and stores
@@ -275,7 +202,7 @@ def getdata(Z, N):
             if 'U' in file['worksheets'][attribute]['type']:
                 myIon.collisions.append(newAttribute)
             if 'O' in file['worksheets'][attribute]['type']:
-                myIon.O.append(newAttribute)
+                myIon.object.append(newAttribute)
             
     #Return the ion
     print myIon
