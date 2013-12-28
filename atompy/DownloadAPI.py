@@ -92,6 +92,35 @@ def getFileList(drive_service):
     #Return the files
     return onlineDataFiles
 
+def recursiveList(driveService, fileList, id, level):
+    #Print the current file/folder
+    printString = ''
+    for y in range(level):
+        printString += '-'
+    found = False
+    for y in range(len(fileList)):
+        if fileList[y]['id'] == id:
+            found = True
+            printString += str(fileList[y]['title'])
+    if found == True:
+        print printString
+    
+    #Figure out if there are some children
+    children = driveService.children().list(folderId=id).execute()['items']
+    
+    #Check to see that they are valid
+    temp = []
+    for x in range(len(children)):
+        for y in range(len(fileList)):
+            if fileList[y]['id'] == children[x]['id']:
+                temp.append(children[x])
+    children = temp
+    
+    #If there are children, recursive call each
+    if len(children) > 0:
+        for y in range(len(children)):
+            recursiveList(driveService, fileList, children[y]['id'], level+1)
+        
 def listContent():
     #Prints a directory view of database
     
@@ -119,19 +148,7 @@ def listContent():
             break
     
     #Now begin the recursive call sequence
-    recursiveList(driveService, root, 0)
-
-def recursiveList(driveService, id, level):
-    children = driveService.children().list(folderId=id).execute()['items']
-    if len(children) > 0:
-        for y in range(len(children)):
-            recursiveList(driveService, children[y]['id'], level+1)
-    else: 
-        printString = ''
-        for y in range(level):
-            printString += '-'
-        printString += str(id)
-        print printString
+    recursiveList(driveService, fileList, root, 0)
 
 def getGDClient():
     #Returns a Google Drive Client object that is
