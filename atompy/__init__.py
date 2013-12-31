@@ -68,33 +68,25 @@ class Ion:
     
     def E(self, index=0, sources=False):
         if sources:
-            print ''
-            for x in range(len(self.levels[index].sources)):
-                print self.levels[index].sources[x]
+            print self.levels[index].sources
         else:
             return self.levels[index].data
     
     def A(self, index=0, sources=False):
         if sources:
-            print ''
-            for x in range(len(self.avalues[index].sources)):
-                print self.avalues[index].sources[x]
+            print self.avalues[index].sources
         else:
             return self.avalues[index].data
     
     def U(self, index=0, sources=False):
         if sources:
-            print ''
-            for x in range(len(self.collisions[index].sources)):
-                print self.collisions[index].sources[x]
+            print self.collisions[index].sources
         else:
             return self.collisions[index].data
         
     def O(self, index=0, sources=False):            
         if sources:
-            print ''
-            for x in range(len(self.object[index].sources)):
-                print self.object[index].sources[x]
+            print self.object[index].sources
         else:
             return self.object[index].data
         
