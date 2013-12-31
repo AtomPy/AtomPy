@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name = 'AtomPy',
-    version = '0.5.1',
+    version = '0.5.1.1',
     author = 'Josiah Boswell',
     description='A cloud atomic data service for astrophysical applications.',
     packages=['atompy'],
