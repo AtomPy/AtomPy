@@ -1,0 +1,10 @@
+setup.py
+AtomPy.egg-info/PKG-INFO
+AtomPy.egg-info/SOURCES.txt
+AtomPy.egg-info/dependency_links.txt
+AtomPy.egg-info/requires.txt
+AtomPy.egg-info/top_level.txt
+atompy/DownloadAPI.py
+atompy/__init__.py
+atompy/myFileModifier.py
+atompy/refs.py

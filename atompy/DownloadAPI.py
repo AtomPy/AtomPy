@@ -1,6 +1,6 @@
 import httplib2
 
-import sys
+import sys, xlrd, xlwt
 
 from httplib2 import Http
 from urllib import urlencode
@@ -161,6 +161,16 @@ def getGDClient():
     gd_client.ProgrammaticLogin()     
     
     return gd_client
+	
+def getRawFile(driveService, file_url):
+	#Download the file
+	resp, content = driveService._http.request(file_url)
+	
+	#Put the excel file into a xlrd workbook
+	wb = xlrd.open_workbook(file_contents=content)
+	
+	#Now create a xlwt workbook
+	new_wb = xlwt()
     
 def getFile(filename):
     #Gets the file data from Google Drive with

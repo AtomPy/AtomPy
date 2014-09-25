@@ -25,7 +25,7 @@ def ExcelToDataframe(_ws, _index_cols):
         lastRow.append('')
     for row in range(_ws.nrows - categoryLine):
         for col in range(_ws.ncols):
-            #Get the value            
+            #Get the value
             value = _ws.cell(row+categoryLine,col).value
             
             #Bug fix: remove unicode space

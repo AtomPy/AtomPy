@@ -1,3 +1,10 @@
+########################
+# AtomPy Main Python Script for AtomPy 2.0
+# Created by Josiah Lucas Boswell (www.josiahboswell.com)
+#
+# This is the main script for AtomPy.
+########################
+
 print 'Initializing AtomPy...'
 
 import DownloadAPI as API
