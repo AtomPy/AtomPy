@@ -7,13 +7,10 @@
 
 print 'Initializing AtomPy...'
 
-import DownloadAPI as API
-import pandas
 import os, sys
+import myIonClass
 import matplotlib.pyplot as plt
 import refs
-import xlrd
-from scipy import constants
 
 #Global Refs class for element, ion, isotope data
 Refs = refs.Refs()
@@ -42,123 +39,18 @@ def isotopeaw(Z, M):
 
 def isotopecomp(Z, M):
     return Refs.isotopecomp(Z, M)
+    
+def getE(Z, N):
+    return getdata(Z, N).E()
+    
+def getA(Z, N):
+    return getdata(Z, N).A()
+    
+def getU(Z, N):
+    return getdata(Z, N).U()
 
-class IonAttribute():
-    def __init__(self):
-        #Title
-        self.title = None
-        
-        #Data holds the pandas dataframe
-        self.data = None
-        
-        #List of sources
-        self.sources = ''
-
-class Ion:
-    def __init__(self, _Z, _N):
-        self.Z = _Z
-        self.N = _N
-        self.name = 'None'
-        self.levels = []
-        self.avalues = []
-        self.collisions = []
-        self.object = []
-        
-    def Name(self):
-        return self.name
-    
-    def Z(self):
-        return self.Z
-    
-    def N(self):
-        return self.N
-    
-    def E(self, index=0, sources=False):
-        if sources:
-            print self.levels[index].sources
-        else:
-            return self.levels[index].data
-    
-    def A(self, index=0, sources=False):
-        if sources:
-            print self.avalues[index].sources
-        else:
-            return self.avalues[index].data
-    
-    def U(self, index=0, sources=False):
-        if sources:
-            print self.collisions[index].sources
-        else:
-            return self.collisions[index].data
-        
-    def O(self, index=0, sources=False):            
-        if sources:
-            print self.object[index].sources
-        else:
-            return self.object[index].data
-        
-    def generateName(self):
-        name = ''
-        if self.Z < 10:
-            name += '0' + str(self.Z)
-        else:
-            name += str(self.Z)
-        name += '_'
-        if self.N < 10:
-            name += '0' + str(self.N)
-        else:
-            name += str(self.N)
-        self.name = name
-    
-    def __str__(self):
-        myString = ''
-        myString += 'Ion: Z = ' + self.name.split('_')[0] + ', N = ' + self.name.split('_')[0] + '\n'
-        
-        #E Sheet Count
-        if len(self.levels) == 0:
-            myString += '  No E sheets found...\n'
-        else:
-            for num in range(len(self.levels)):
-                myString += '  E' + str(num) + ': ' + self.levels[num].title + '\n'
-        
-        #A Sheet Count
-        if len(self.avalues) == 0:
-            myString += '  No A sheets found...\n'
-        else:
-            for num in range(len(self.avalues)):
-                myString += '  A' + str(num) + ': ' + self.avalues[num].title + '\n'
-        
-        #U Sheet Count    
-        if len(self.collisions) == 0:
-            myString += '  No U sheets found...\n'
-        else: 
-            for num in range(len(self.collisions)):
-                myString += '  U' + str(num) + ': ' + self.collisions[num].title + '\n'
-        
-        #O Sheet Count
-        if len(self.object) == 0:
-            myString += '  No O sheets found...\n'
-        else: 
-            for num in range(len(self.object)):
-                myString += '  O' + str(num) + ': ' + self.object[num].title + '\n'
-                
-        #Return
-        return myString
-    
-def getE(Z1, N1):
-    return getdata(Z1, N1).E()
-    
-def getA(Z1, N1):
-    return getdata(Z1, N1).A()
-    
-def getU(Z1, N1):
-    return getdata(Z1, N1).U()
-
-def getO(Z1, N1):
-    return getdata(Z1, N1).O()
-    
-def listcontent():
-    API.listContent()
+def getO(Z, N):
+    return getdata(Z, N).O()
 
 def getdata(Z, N):
     #Downloads various atomic data files and stores
@@ -171,10 +63,8 @@ def getdata(Z, N):
     Z = int(Z)
     N = int(N)
 
-    myIon = Ion(Z, N)
-            
-    #Generate our name
-    myIon.generateName()
+	#Create our ion structure
+    myIon = myIonClass(Z, N)
     
     #Build the filename
     filename = myIon.name
